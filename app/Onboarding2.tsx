@@ -4,11 +4,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { router } from 'expo-router';
+import { MaskedTextInput } from 'react-native-mask-text';
 
 const Onboarding1 = () => {
 
-    const [firstName, setFirstName] = React.useState<string>("");
-    const [lastName, setLastName] = React.useState<string>("");
+    const [email, setEmail] = React.useState<string>("");
+    const [phoneNumber, setPhoneNumber] = React.useState<string>("");
     const [fontsLoaded] = useFonts({
         'Markazi-Regular': require('@/assets/fonts/MarkaziText-Regular.ttf'),
         'Markazi-Bold': require('@/assets/fonts/MarkaziText-Bold.ttf'),
@@ -26,14 +27,17 @@ const Onboarding1 = () => {
         return null;
     }
 
-    const isEmailAndFNameValid = (firstName: string, lastName: string) => {
+    let checkIsEmailAndPhonenumberValid = (email: string, phoneNumber: string) => {
+        const emailRegrex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        let validPhoneNumber = false;
+        if (phoneNumber.length === 15) {
+            validPhoneNumber = true;
+            return emailRegrex.test(email) && validPhoneNumber;
+        }
 
-        const nameRegrex = /^[A-Za-z]+( [A-Za-z]+)*$/;
-
-        return nameRegrex.test(firstName) && nameRegrex.test(lastName);
     }
 
-    const isValid = isEmailAndFNameValid(firstName, lastName);
+    let isValid = checkIsEmailAndPhonenumberValid(email, phoneNumber);
 
     return (
         <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -49,35 +53,48 @@ const Onboarding1 = () => {
                 <View style={styles.body}>
                     <Text style={styles.bodyText}>Let us get to know you</Text>
                     <View style={styles.inputContainer}>
-                        <Text style={styles.text}>First Name</Text>
+                        <Text style={styles.text}>Email</Text>
                         <TextInput
-                            value={firstName}
-                            onChangeText={(text) => setFirstName(text)}
-                            style={styles.textInput}
-                            cursorColor={"#495E57"}
-                            selectionColor={'#EDEFEE'}
-                            selectionHandleColor={'#495E57'}
-                            keyboardType={'default'}
-                        />
-                        <Text style={styles.text}>Last Name</Text>
-                        <TextInput
-                            value={lastName}
-                            onChangeText={(text) => setLastName(text)}
+                            value={email}
+                            onChangeText={(text) => setEmail(text)}
+                            placeholder={"example@gmail.com"}
+                            placeholderTextColor={"rgba(73, 94, 87, 0.6)"}
                             style={styles.textInput}
                             cursorColor={"#495E57"}
                             selectionColor={'#EDEFEE'}
                             selectionHandleColor={'#495E57'}
                             keyboardType={"email-address"}
                         />
+                        <Text style={styles.text}>Phone number</Text>
+                        <MaskedTextInput
+                            mask='+99 999-9999999'
+                            value={phoneNumber}
+                            onChangeText={(unmasked: string) => setPhoneNumber(unmasked)}
+                            placeholder={"+92 3XX-YYYYYYY"}
+                            placeholderTextColor={"rgba(73, 94, 87, 0.6)"}
+                            style={styles.textInput}
+                            cursorColor={"#495E57"}
+                            selectionColor={'#EDEFEE'}
+                            selectionHandleColor={'#495E57'}
+                            keyboardType={"number-pad"}
+                        />
                     </View>
                 </View>
-                <Pressable
-                    style={[styles.button, !isValid && styles.disabledButton]}
-                    disabled={!isValid}
-                    onPress={() => router.push('/Onboarding2')}
-                >
-                    <Text style={[styles.buttonText, !isValid && styles.disabledButtonText]}>Next</Text>
-                </Pressable>
+                <View style={styles.buttonContainer}>
+                    <Pressable
+                        style={styles.button}
+                        onPress={() => router.back()}
+                    >
+                        <Text style={styles.buttonText}>Previous</Text>
+                    </Pressable>
+                    <Pressable
+                        style={[styles.button, !isValid && styles.disabledButton]}
+                        disabled={!isValid}
+                        onPress={() => router.push('/Profile')}
+                    >
+                        <Text style={[styles.buttonText, !isValid && styles.disabledButtonText]}>Complete</Text>
+                    </Pressable>
+                </View>
             </ScrollView>
         </KeyboardAvoidingView>
     );
@@ -151,9 +168,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#cbd2da',
         marginTop: '14%',
         padding: 10,
-        marginHorizontal: '32%',
+        //marginHorizontal: '32%',
         borderRadius: 10,
-        left: '24%',
     },
     buttonText: {
         fontSize: 25,
@@ -170,5 +186,10 @@ const styles = StyleSheet.create({
     disabledButtonText: {
         color: '#495E57',
         opacity: 0.5
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingHorizontal: '6%'
     }
 });
