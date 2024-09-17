@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { ScrollView, View, Text, StyleSheet, Image, TextInput, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { router } from 'expo-router';
@@ -25,7 +24,7 @@ const Onboarding1 = () => {
     if (!fontsLoaded) {
         return null;
     }
-
+    
     const isEmailAndFNameValid = (firstName: string, lastName: string) => {
 
         const nameRegrex = /^[A-Za-z]+( [A-Za-z]+)*$/;
@@ -67,7 +66,7 @@ const Onboarding1 = () => {
                             cursorColor={"#495E57"}
                             selectionColor={'#EDEFEE'}
                             selectionHandleColor={'#495E57'}
-                            keyboardType={"email-address"}
+                            keyboardType={'default'}
                         />
                     </View>
                 </View>

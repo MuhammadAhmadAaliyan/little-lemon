@@ -1,12 +1,11 @@
 import * as React from 'react';
 import { ScrollView, View, Text, StyleSheet, Image, TextInput, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { router } from 'expo-router';
 import { MaskedTextInput } from 'react-native-mask-text';
 
-const Onboarding1 = () => {
+const Onboarding2 = () => {
 
     const [email, setEmail] = React.useState<string>("");
     const [phoneNumber, setPhoneNumber] = React.useState<string>("");
@@ -69,7 +68,7 @@ const Onboarding1 = () => {
                         <MaskedTextInput
                             mask='+99 999-9999999'
                             value={phoneNumber}
-                            onChangeText={(unmasked: string) => setPhoneNumber(unmasked)}
+                            onChangeText={(masked: string, unmasked: string) => setPhoneNumber(masked)}
                             placeholder={"+92 3XX-YYYYYYY"}
                             placeholderTextColor={"rgba(73, 94, 87, 0.6)"}
                             style={styles.textInput}
@@ -88,11 +87,11 @@ const Onboarding1 = () => {
                         <Text style={styles.buttonText}>Previous</Text>
                     </Pressable>
                     <Pressable
-                        style={[styles.button, !isValid && styles.disabledButton]}
+                        style={[styles.button, !isValid && styles.disabledButton, {paddingHorizontal: '10%'}]}
                         disabled={!isValid}
-                        onPress={() => router.push('/Profile')}
+                        onPress={() => router.push('/Onboarding3')}
                     >
-                        <Text style={[styles.buttonText, !isValid && styles.disabledButtonText]}>Complete</Text>
+                        <Text style={[styles.buttonText, !isValid && styles.disabledButtonText]}>Next</Text>
                     </Pressable>
                 </View>
             </ScrollView>
@@ -100,7 +99,7 @@ const Onboarding1 = () => {
     );
 }
 
-export default Onboarding1;
+export default Onboarding2;
 
 const styles = StyleSheet.create({
     container: {
@@ -168,7 +167,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#cbd2da',
         marginTop: '14%',
         padding: 10,
-        //marginHorizontal: '32%',
+        //marginHorizontal: '12%',
         borderRadius: 10,
     },
     buttonText: {
