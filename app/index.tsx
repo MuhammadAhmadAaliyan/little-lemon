@@ -3,6 +3,7 @@ import { ScrollView, View, Text, StyleSheet, Image, TextInput, KeyboardAvoidingV
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { router } from 'expo-router';
+import { useAppData } from './AppData';
 
 const Onboarding1 = () => {
 
@@ -14,6 +15,8 @@ const Onboarding1 = () => {
         'Karla-Medium': require('@/assets/fonts/Karla-Medium.ttf'),
         'Karla-Regular': require('@/assets/fonts/Karla-Regular.ttf'),
     });
+
+    const { updateScreenData, screenData } = useAppData();
 
     React.useEffect(() => {
         if (fontsLoaded) {
@@ -33,6 +36,13 @@ const Onboarding1 = () => {
     }
 
     const isValid = isEmailAndFNameValid(firstName, lastName);
+
+    let handleButton = () => {
+
+        router.push('/Onboarding2');
+        updateScreenData('Onboarding1', {fName: firstName, lName: lastName});
+        console.log(screenData.Onboarding1.fName);
+    }
 
     return (
         <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -73,7 +83,7 @@ const Onboarding1 = () => {
                 <Pressable
                     style={[styles.button, !isValid && styles.disabledButton]}
                     disabled={!isValid}
-                    onPress={() => router.push('/Onboarding2')}
+                    onPress={() => handleButton()}
                 >
                     <Text style={[styles.buttonText, !isValid && styles.disabledButtonText]}>Next</Text>
                 </Pressable>

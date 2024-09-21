@@ -4,6 +4,7 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { router } from 'expo-router';
 import { MaskedTextInput } from 'react-native-mask-text';
+import { useAppData } from './AppData';
 
 const Onboarding2 = () => {
 
@@ -15,6 +16,8 @@ const Onboarding2 = () => {
         'Karla-Medium': require('@/assets/fonts/Karla-Medium.ttf'),
         'Karla-Regular': require('@/assets/fonts/Karla-Regular.ttf'),
     });
+
+    const { updateScreenData } = useAppData();
 
     React.useEffect(() => {
         if (fontsLoaded) {
@@ -37,6 +40,12 @@ const Onboarding2 = () => {
     }
 
     let isValid = checkIsEmailAndPhonenumberValid(email, phoneNumber);
+
+    let handleButton = () => {
+
+        router.push('/Onboarding3');
+        updateScreenData('Onboarding2', {email: email, phoneNumber: phoneNumber});
+    }
 
     return (
         <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -89,7 +98,7 @@ const Onboarding2 = () => {
                     <Pressable
                         style={[styles.button, !isValid && styles.disabledButton, {paddingHorizontal: '10%'}]}
                         disabled={!isValid}
-                        onPress={() => router.push('/Onboarding3')}
+                        onPress={() => handleButton()}
                     >
                         <Text style={[styles.buttonText, !isValid && styles.disabledButtonText]}>Next</Text>
                     </Pressable>

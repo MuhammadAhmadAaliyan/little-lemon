@@ -5,6 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker'
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAppData } from './AppData';
 
 const Onboarding3 = () => {
 
@@ -15,6 +16,8 @@ const Onboarding3 = () => {
         'Karla-Medium': require('@/assets/fonts/Karla-Medium.ttf'),
         'Karla-Regular': require('@/assets/fonts/Karla-Regular.ttf'),
     });
+
+    const { updateScreenData } = useAppData();
 
     React.useEffect(() => {
         if (fontsLoaded) {
@@ -32,6 +35,7 @@ const Onboarding3 = () => {
             let permission = await ImagePicker.requestCameraPermissionsAsync();
             if (!permission) {
                 Alert.alert("Permisson to access the camera is required!!");
+                return;
             }
 
             let imageResult = await ImagePicker.launchCameraAsync({
@@ -54,6 +58,7 @@ const Onboarding3 = () => {
             let permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
             if (!permission) {
                 Alert.alert("Permisson to access the gallery is required!!");
+                return;
             }
 
             let imageResult = await ImagePicker.launchImageLibraryAsync({
@@ -74,8 +79,9 @@ const Onboarding3 = () => {
     let handleButton = async () => {
         try{
 
-            await AsyncStorage.setItem('onboardingComplete', "true");
             router.replace('/Profile');
+            await AsyncStorage.setItem('onboardingComplete', "true");
+            updateScreenData('Onboarding3', {imageUri: imageUri});
         }catch(e){
             console.log("An error occurred during saving!!");
         }
@@ -203,16 +209,6 @@ const styles = StyleSheet.create({
         fontFamily: 'Karla-Medium',
         textAlign: 'center',
         color: '#495E57'
-    },
-    disabledButton: {
-        backgroundColor: '#cbd2da',
-        borderColor: 'rgba(203, 210, 218, 0.5)',
-        opacity: 0.5,
-
-    },
-    disabledButtonText: {
-        color: '#495E57',
-        opacity: 0.5
     },
     buttonContainer: {
         flexDirection: 'row',
