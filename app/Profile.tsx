@@ -40,9 +40,6 @@ const Profile = () => {
   });
   const [profileInitials, setProfileInitials] = React.useState<string>();
   const [isModalVisible, setModalVisible] = React.useState(false);
-  const [isEditable, setEditable] = React.useState(false);
-
-  const textInputRef = React.useRef<TextInput>(null);
 
   const { screenData } = useAppData();
 
@@ -278,15 +275,6 @@ const Profile = () => {
     ], { cancelable: true });
   }
 
-  let handleEditTextInput = () => {
-      setEditable(true);
-      textInputRef.current?.focus();
-  }
-
-  let handleBlur = () => {
-    setEditable(false);
-  }
-
   return (
     <>
       <View style={styles.container}>
@@ -365,6 +353,7 @@ const Profile = () => {
           </View>
           <Text style={[styles.subText, { paddingTop: '6%' }]}>Last name</Text>
           <View style={styles.info}>
+          <Text style={styles.infoText}>{lastName}</Text>
           </View>
           <Text style={[styles.subText, { paddingTop: '6%' }]}>Email</Text>
           <View style={styles.info}>
