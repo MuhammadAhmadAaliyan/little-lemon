@@ -8,10 +8,10 @@ import { useAppData } from './AppData';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import Feather from '@expo/vector-icons/Feather';
 import * as ImagePicker from 'expo-image-picker';
+import { MaskedTextInput } from 'react-native-mask-text';
 
-interface checkBoxType {
+type checkBoxType = {
   orderStatuses: boolean,
   passwordChanges: boolean,
   specialOffers: boolean,
@@ -40,6 +40,10 @@ const Profile = () => {
   });
   const [profileInitials, setProfileInitials] = React.useState<string>();
   const [isModalVisible, setModalVisible] = React.useState(false);
+  const [field, setField] = React.useState<string>("");
+  const [isGlobalModalVisible, setGlobalModalVisible] = React.useState(false);
+  const [currentValue, setCurrentValue] = React.useState<string | undefined>("");
+  const [isAnyChange, setAnyChange] = React.useState<string>("");
 
   const { screenData } = useAppData();
 
@@ -169,6 +173,7 @@ const Profile = () => {
       });
     }
 
+    storeNotificationCheckboxStatus(checkbox);
     loadDataFromMemory();
     loadNotificationCheckboxStatus();
   }, [])
@@ -178,14 +183,16 @@ const Profile = () => {
   }
 
   let toggleCheckBox = (key: keyof checkBoxType) => {
-
-    let updateCheckBox = {
-      ...checkbox,
-      [key]: !checkbox[key]
-    }
-    setCheckbox(updateCheckBox);
-    storeNotificationCheckboxStatus(updateCheckBox);
-  }
+    setCheckbox((prevCheckbox) => {
+      const updatedCheckbox = {
+        ...prevCheckbox,
+        [key]: !prevCheckbox[key],
+      };
+      //storeNotificationCheckboxStatus(updatedCheckbox); // Save the updated state
+      return updatedCheckbox;
+    });
+    setAnyChange('true');
+  };
 
   let logOut = async () => {
     try {
@@ -219,7 +226,8 @@ const Profile = () => {
       if (!imageResult.canceled) {
         const profileImage = imageResult.assets[0].uri;
         setProfileImage(profileImage);
-        await AsyncStorage.setItem('user_imageUri', profileImage);
+        //await AsyncStorage.setItem('user_imageUri', profileImage);
+        setCurrentValue("Image taked Successfully.")
       }
     } catch (e) {
       console.log("An error occurred while taking picture!!")
@@ -246,7 +254,8 @@ const Profile = () => {
       if (!imageResult.canceled) {
         let profileImage = imageResult.assets[0].uri;
         setProfileImage(profileImage);
-        await AsyncStorage.setItem('user_imageUri', profileImage);
+        //await AsyncStorage.setItem('user_imageUri', profileImage);
+        setAnyChange("Image picked Successfully.")
       }
     } catch (e) {
       console.log("An error occurred while picking image!!");
@@ -266,9 +275,109 @@ const Profile = () => {
         onPress: async () => {
           try {
             setProfileImage(null);
-            await AsyncStorage.removeItem('user_imageUri');
+            //await AsyncStorage.removeItem('user_imageUri');
+            setAnyChange('Profile Image has been removed Successfully.')
           } catch (e) {
             console.log("An error occurred while removing profile picture!!");
+          }
+        }
+      },
+    ], { cancelable: true });
+  }
+
+  let checkIsEmailValid = (email: any) => {
+    const emailRegrex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegrex.test(email);
+  }
+
+  let handleEditSave = () => {
+    switch (field) {
+      case 'First name':
+        setFirstName(currentValue);
+        setGlobalModalVisible(false);
+        setAnyChange('true');
+        break;
+      case 'Last name':
+        setLastName(currentValue);
+        setGlobalModalVisible(false);
+        setAnyChange('true');
+        break;
+      case 'Email':
+        let validEmail = checkIsEmailValid(currentValue);
+        if (validEmail) {
+          setEmail(currentValue);
+          setGlobalModalVisible(false);
+          setAnyChange('true');
+        } else {
+          Alert.alert(`"${currentValue}" is not a valid email. Please entered a valid email!!`);
+        }
+        break;
+      case 'Phone number':
+        setPhoneNumber(currentValue);
+        setGlobalModalVisible(false);
+        setAnyChange('true');
+        break;
+    }
+  }
+
+  let saveChanges = async () => {
+    try {
+      if (firstName)
+        await AsyncStorage.setItem('user_firstName', firstName);
+      if (lastName)
+        await AsyncStorage.setItem('user_lastName', lastName);
+      if (email)
+        await AsyncStorage.setItem('user_email', email);
+      if (phoneNumber)
+        await AsyncStorage.setItem('user_phoneNumber', phoneNumber);
+      if (profileImage) {
+        await AsyncStorage.setItem('user_imageUri', profileImage);
+      } else {
+        await AsyncStorage.removeItem('user_imageUri');
+      }
+
+      storeNotificationCheckboxStatus(checkbox);
+
+      Alert.alert("Changes have been saved Successfully.");
+      setAnyChange("");
+    } catch (e) {
+      console.log("An error occurred while saving changes!!")
+    }
+  }
+
+  let discardChanges = async () => {
+    Alert.alert("Confirm Deletion:", "Are you sure you want to delete profile picture?", [
+      {
+        text: 'Cancel',
+        style: 'cancel',
+        onPress: () => null
+      },
+      {
+        text: 'Yes',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            let fName = await AsyncStorage.getItem('user_firstName');
+            let lName = await AsyncStorage.getItem('user_lastName');
+            let email = await AsyncStorage.getItem('user_email');
+            let pNumber = await AsyncStorage.getItem('user_phoneNumber');
+            let pUri = await AsyncStorage.getItem('user_imageUri');
+
+            if (fName)
+              setFirstName(fName);
+            if (lName)
+              setLastName(lName);
+            if (email)
+              setEmail(email);
+            if (pNumber)
+              setPhoneNumber(pNumber);
+            if (pUri)
+              setProfileImage(pUri);
+
+            loadNotificationCheckboxStatus();
+            setAnyChange('');
+          } catch (e) {
+            console.log("An error occurred while discarding!!");
           }
         }
       },
@@ -350,18 +459,55 @@ const Profile = () => {
           <Text style={[styles.subText, { paddingTop: '6%' }]}>First name</Text>
           <View style={styles.info}>
             <Text style={styles.infoText}>{firstName}</Text>
+            <AntDesign
+              name={'edit'}
+              size={18}
+              color={'#495E57'}
+              onPress={() => {
+                setField("First name");
+                setCurrentValue(firstName);
+                setGlobalModalVisible(true);
+              }} />
           </View>
           <Text style={[styles.subText, { paddingTop: '6%' }]}>Last name</Text>
           <View style={styles.info}>
-          <Text style={styles.infoText}>{lastName}</Text>
+            <Text style={styles.infoText}>{lastName}</Text>
+            <AntDesign
+              name={'edit'}
+              size={18}
+              color={'#495E57'}
+              onPress={() => {
+                setField("Last name");
+                setCurrentValue(lastName)
+                setGlobalModalVisible(true);
+              }} />
           </View>
           <Text style={[styles.subText, { paddingTop: '6%' }]}>Email</Text>
           <View style={styles.info}>
             <Text style={styles.infoText}>{email}</Text>
+            <AntDesign
+              name={'edit'}
+              size={18}
+              color={'#495E57'}
+              onPress={() => {
+                setField("Email");
+                setCurrentValue(email)
+                setGlobalModalVisible(true);
+              }} />
           </View>
           <Text style={[styles.subText, { paddingTop: '6%' }]}>Phone number</Text>
           <View style={styles.info}>
             <Text style={styles.infoText}>{phoneNumber}</Text>
+            <AntDesign
+              name={'edit'}
+              size={18}
+              color={'#495E57'}
+              onPress={() => {
+                setField('Phone number');
+                setGlobalModalVisible(true);
+                setCurrentValue(phoneNumber);
+              }}
+            />
           </View>
           <Text style={styles.text}>Email notifications</Text>
           <View style={styles.checkboxContainer}>
@@ -403,11 +549,27 @@ const Profile = () => {
             <Text style={styles.logoutButtonText}>Log out</Text>
           </Pressable>
           <View style={styles.profileChangesButtonsContainer}>
-            <Pressable style={[styles.profileChangesButton, { backgroundColor: '#fff', borderRadius: 5 }]}>
+            <Pressable
+              style={[
+                styles.profileChangesButton,
+                { backgroundColor: '#fff', borderRadius: 5 },
+                !isAnyChange && styles.disabled
+              ]}
+              disabled={!isAnyChange}
+              onPress={() => discardChanges()}
+            >
               <Text style={[styles.profileChangesButtonText, { color: '#495E57', fontFamily: 'Karla-Regular' }]}>Discard changes</Text>
             </Pressable>
-            <Pressable style={styles.profileChangesButton}>
-              <Text style={styles.profileChangesButtonText}>Save changes</Text>
+            <Pressable
+              style={[
+                styles.profileChangesButton,
+                !isAnyChange && styles.disabled
+              ]}
+              disabled={!isAnyChange}
+              onPress={() => saveChanges()}
+            >
+              <Text style={[
+                styles.profileChangesButtonText, !currentValue && { color: 'white' }]}>Save changes</Text>
             </Pressable>
           </View>
         </ScrollView>
@@ -446,6 +608,61 @@ const Profile = () => {
           </View>
         </View>
       </Modal>
+      <Modal
+        style={{ flex: 1 }}
+        animationType={'fade'}
+        transparent={true}
+        visible={isGlobalModalVisible}
+        onRequestClose={() => setGlobalModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Edit {field}</Text>
+            {field == "Phone number" ? (
+              <MaskedTextInput
+                mask='+99 999-9999999'
+                value={currentValue}
+                onChangeText={(masked: string, unmasked: string) => setCurrentValue(masked)}
+                placeholder={"+92 3XX-YYYYYYY"}
+                placeholderTextColor={"rgba(73, 94, 87, 0.6)"}
+                style={styles.textInput}
+                cursorColor={"#495E57"}
+                selectionColor={'#EDEFEE'}
+                selectionHandleColor={'#495E57'}
+                keyboardType={"number-pad"}
+              />
+            ) : (
+              <TextInput
+                value={currentValue}
+                onChangeText={(text: any) => setCurrentValue(text)}
+                style={styles.textInput}
+                cursorColor={"#495E57"}
+                selectionColor={'#EDEFEE'}
+                selectionHandleColor={'#495E57'}
+                keyboardType={field == "Email" ? 'email-address' : 'default'}
+                placeholder={field == "Email" ? 'example@gmail.com' : 'Enter new name'}
+                placeholderTextColor={"rgba(73, 94, 87, 0.6)"}
+              />
+            )}
+            <View style={styles.editButtonContainer}>
+              <Pressable
+                style={styles.editButton}
+                onPress={() => setGlobalModalVisible(false)}
+              >
+                <Text style={styles.editButtonText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                style={styles.editButton}
+                onPress={() => {
+                  handleEditSave();
+                }}
+              >
+                <Text style={styles.editButtonText}>Save</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 }
@@ -466,7 +683,7 @@ const styles = StyleSheet.create({
     left: '50%',
     transform: [{ translateX: -150 }, { translateY: -150 }],
     opacity: 0.1,
-    zIndex: -1
+    //zIndex: -1
   },
   contentContainer: {
     flex: 1
@@ -578,6 +795,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#cbd2da',
     padding: 8,
+    paddingHorizontal: 10,
     borderRadius: 10,
     height: 45,
     justifyContent: 'space-between',
@@ -588,7 +806,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: 'Karla-Regular',
     color: '#495E57',
-    paddingRight: 8
+    //paddingRight: 6
   },
   checkboxContainer: {
     paddingHorizontal: '2%',
@@ -670,5 +888,28 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.3,
     borderColor: 'rgba(73, 94, 87, 0.6)'
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#495E57',
+    marginVertical: 10,
+    height: 48,
+    borderRadius: 10,
+    padding: 8,
+    fontFamily: 'Karla-Regular',
+    fontSize: 22,
+    color: '#495E57'
+  },
+  editButtonContainer: {
+    flexDirection: 'row',
+    left: '46%'
+  },
+  editButton: {
+    marginHorizontal: 18,
+    marginTop: 25,
+  },
+  editButtonText: {
+    fontSize: 20,
+    color: '#495E57'
   }
 }); 
