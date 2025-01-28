@@ -42,8 +42,9 @@ const Profile = () => {
   const [isModalVisible, setModalVisible] = React.useState(false);
   const [field, setField] = React.useState<string>("");
   const [isGlobalModalVisible, setGlobalModalVisible] = React.useState(false);
-  const [currentValue, setCurrentValue] = React.useState<string | undefined>("");
+  const [currentValue, setCurrentValue] = React.useState<any>("");
   const [isAnyChange, setAnyChange] = React.useState<string>("");
+  const [isDisabled, setDisalbed] = React.useState<boolean>(true);
 
   const { screenData } = useAppData();
 
@@ -55,7 +56,7 @@ const Profile = () => {
 
   React.useEffect(() => {
     const backAction = () => {
-      Alert.alert("", 'Are you sure you want to exit?', [
+      Alert.alert('Confirmation:', 'Are you sure you want to exit?', [
         {
           text: 'Cancel',
           onPress: () => null,
@@ -136,47 +137,80 @@ const Profile = () => {
     }
   }
 
-  React.useEffect(() => {
-    const keys = [
-      'user_firstName',
-      'user_lastName',
-      'user_email',
-      'user_phoneNumber',
-      'user_imageUri',
-      'user_profileInitials'
-    ]
-    let loadDataFromMemory = async () => {
-      const result = await AsyncStorage.multiGet(keys);
-      result.forEach(([key, value]: any) => {
-        if (value) {
-          switch (key) {
-            case 'user_firstName':
-              setFirstName(value);
-              break;
-            case 'user_lastName':
-              setLastName(value);
-              break;
-            case 'user_email':
-              setEmail(value);
-              break;
-            case 'user_phoneNumber':
-              setPhoneNumber(value);
-              break;
-            case 'user_imageUri':
-              setProfileImage(value);
-              break;
-            case 'user_profileInitials':
-              setProfileInitials(value);
-              break;
-          }
+  const keys = [
+    'user_firstName',
+    'user_lastName',
+    'user_email',
+    'user_phoneNumber',
+    'user_imageUri',
+    'user_profileInitials'
+  ]
+  let loadDataFromMemory = async () => {
+    const result = await AsyncStorage.multiGet(keys);
+    result.forEach(([key, value]: any) => {
+      if (value) {
+        switch (key) {
+          case 'user_firstName':
+            setFirstName(value);
+            break;
+          case 'user_lastName':
+            setLastName(value);
+            break;
+          case 'user_email':
+            setEmail(value);
+            break;
+          case 'user_phoneNumber':
+            setPhoneNumber(value);
+            break;
+          case 'user_imageUri':
+            setProfileImage(value);
+            break;
+          case 'user_profileInitials':
+            setProfileInitials(value);
+            break;
         }
-      });
-    }
+      }
+    });
+  }
 
+  React.useEffect(() => {
     storeNotificationCheckboxStatus(checkbox);
     loadDataFromMemory();
     loadNotificationCheckboxStatus();
-  }, [])
+  }, []);
+
+  React.useEffect(() => {
+    switch (field) {
+      case 'First name':
+        if (currentValue == firstName || currentValue == "") {
+          setDisalbed(true);
+        } else {
+          setDisalbed(false);
+        }
+        break;
+      case 'Last name':
+        if (currentValue == lastName || currentValue == "") {
+          setDisalbed(true);
+        } else {
+          setDisalbed(false);
+        }
+        break;
+      case 'Email':
+        if (currentValue == email || currentValue == "") {
+          setDisalbed(true);
+        } else {
+          setDisalbed(false);
+        }
+        break;
+      case 'Phone number':
+        if (currentValue == phoneNumber || currentValue == "") {
+          setDisalbed(true);
+        } else {
+          setDisalbed(false);
+        }
+        break;
+    }
+  }, [currentValue]);
 
   if (!fontsLoaded) {
     return null;
@@ -227,7 +261,7 @@ const Profile = () => {
         const profileImage = imageResult.assets[0].uri;
         setProfileImage(profileImage);
         //await AsyncStorage.setItem('user_imageUri', profileImage);
-        setCurrentValue("Image taked Successfully.")
+        setAnyChange("Image taked Successfully.")
       }
     } catch (e) {
       console.log("An error occurred while taking picture!!")
@@ -296,11 +330,13 @@ const Profile = () => {
         setFirstName(currentValue);
         setGlobalModalVisible(false);
         setAnyChange('true');
+        setDisalbed(true);
         break;
       case 'Last name':
         setLastName(currentValue);
         setGlobalModalVisible(false);
         setAnyChange('true');
+        setDisalbed(true);
         break;
       case 'Email':
         let validEmail = checkIsEmailValid(currentValue);
@@ -308,6 +344,7 @@ const Profile = () => {
           setEmail(currentValue);
           setGlobalModalVisible(false);
           setAnyChange('true');
+          setDisalbed(true);
         } else {
           Alert.alert(`"${currentValue}" is not a valid email. Please entered a valid email!!`);
         }
@@ -316,6 +353,7 @@ const Profile = () => {
         setPhoneNumber(currentValue);
         setGlobalModalVisible(false);
         setAnyChange('true');
+        setDisalbed(true);
         break;
     }
   }
@@ -335,6 +373,11 @@ const Profile = () => {
       } else {
         await AsyncStorage.removeItem('user_imageUri');
       }
+      if (firstName && lastName) {
+        let initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+        setProfileInitials(initials);
+        await AsyncStorage.setItem('user_profileInitials', initials);
+      }
 
       storeNotificationCheckboxStatus(checkbox);
 
@@ -346,7 +389,7 @@ const Profile = () => {
   }
 
   let discardChanges = async () => {
-    Alert.alert("Confirm Deletion:", "Are you sure you want to delete profile picture?", [
+    Alert.alert("Confirmation:", "Are you sure you want to discard changes?", [
       {
         text: 'Cancel',
         style: 'cancel',
@@ -362,6 +405,7 @@ const Profile = () => {
             let email = await AsyncStorage.getItem('user_email');
             let pNumber = await AsyncStorage.getItem('user_phoneNumber');
             let pUri = await AsyncStorage.getItem('user_imageUri');
+            let initials = await AsyncStorage.getItem('user_profileInitials');
 
             if (fName)
               setFirstName(fName);
@@ -371,8 +415,14 @@ const Profile = () => {
               setEmail(email);
             if (pNumber)
               setPhoneNumber(pNumber);
-            if (pUri)
+            if (pUri) {
               setProfileImage(pUri);
+            } else {
+              setProfileImage("");
+            }
+            if (initials) {
+              setProfileInitials(initials);
+            }
 
             loadNotificationCheckboxStatus();
             setAnyChange('');
@@ -652,10 +702,11 @@ const Profile = () => {
                 <Text style={styles.editButtonText}>Cancel</Text>
               </Pressable>
               <Pressable
-                style={styles.editButton}
+                style={[styles.editButton, isDisabled&&styles.disabled]}
                 onPress={() => {
                   handleEditSave();
                 }}
+                disabled={isDisabled}
               >
                 <Text style={styles.editButtonText}>Save</Text>
               </Pressable>
