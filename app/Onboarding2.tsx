@@ -4,7 +4,7 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { router } from 'expo-router';
 import { MaskedTextInput } from 'react-native-mask-text';
-import { useAppData } from './AppData';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Onboarding2 = () => {
 
@@ -16,8 +16,6 @@ const Onboarding2 = () => {
         'Karla-Medium': require('@/assets/fonts/Karla-Medium.ttf'),
         'Karla-Regular': require('@/assets/fonts/Karla-Regular.ttf'),
     });
-
-    const { updateScreenData } = useAppData();
 
     React.useEffect(() => {
         if (fontsLoaded) {
@@ -41,13 +39,29 @@ const Onboarding2 = () => {
 
     let isValid = checkIsEmailAndPhonenumberValid(email, phoneNumber);
 
-    let handleButton = () => {
+    let handleButton = async () => {
+        try{
+            let data: any = [];
+            if(email){
+                data.push(['user_email', email]);
+            }
+            if(phoneNumber){
+                data.push(['user_phoneNumber', phoneNumber]);
+            }
 
-        router.push('/Onboarding3');
-        updateScreenData('Onboarding2', {email: email, phoneNumber: phoneNumber});
+            if(data.length > 0){
+                await AsyncStorage.multiSet(data);
+            }
+
+            console.log("Onboarding2 data has been saved Successfully.");
+            router.push('/Onboarding3');
+        }catch(e){
+            console.log("An error occurred while saving data of Onboarding 2!!");
+        }
     }
 
     return (
+        <>
         <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
             <ScrollView>
                 <View style={styles.header}>
@@ -105,6 +119,7 @@ const Onboarding2 = () => {
                 </View>
             </ScrollView>
         </KeyboardAvoidingView>
+        </>
     );
 }
 

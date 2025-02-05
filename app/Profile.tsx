@@ -4,7 +4,6 @@ import * as SplashScreen from 'expo-splash-screen';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { Checkbox } from 'react-native-paper'
 import { useFonts } from 'expo-font';
-import { useAppData } from './AppData';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -46,75 +45,11 @@ const Profile = () => {
   const [isAnyChange, setAnyChange] = React.useState<string>("");
   const [isDisabled, setDisalbed] = React.useState<boolean>(true);
 
-  const { screenData } = useAppData();
-
   React.useEffect(() => {
     if (fontsLoaded) {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded]);
-
-  React.useEffect(() => {
-    const backAction = () => {
-      Alert.alert('Confirmation:', 'Are you sure you want to exit?', [
-        {
-          text: 'Cancel',
-          onPress: () => null,
-          style: 'cancel',
-        },
-        { text: 'YES', onPress: () => BackHandler.exitApp() }
-      ]);
-      return true;
-    };
-
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
-
-    return () => backHandler.remove();
-  }, []);
-
-  React.useEffect(() => {
-    let saveDataInMemory = async () => {
-      try {
-        let data: any = [];
-
-        if (screenData.Onboarding1.fName) {
-          setFirstName(screenData.Onboarding1.fName);
-          data.push(['user_firstName', screenData.Onboarding1.fName]);
-        }
-        if (screenData.Onboarding1.lName) {
-          setLastName(screenData.Onboarding1.lName);
-          data.push(['user_lastName', screenData.Onboarding1.lName]);
-        }
-        if (screenData.Onboarding2.email) {
-          setEmail(screenData.Onboarding2.email);
-          data.push(['user_email', screenData.Onboarding2.email]);
-        }
-        if (screenData.Onboarding2.phoneNumber) {
-          setPhoneNumber(screenData.Onboarding2.phoneNumber);
-          data.push(['user_phoneNumber', screenData.Onboarding2.phoneNumber]);
-        }
-        if (screenData.Onboarding3?.imageUri) {
-          setProfileImage(screenData.Onboarding3.imageUri);
-          data.push(['user_imageUri', screenData.Onboarding3.imageUri]);
-        } else {
-          setProfileImage(null);
-        }
-        if (screenData.Onboarding1.fName && screenData.Onboarding1.lName) {
-          let initials = `${screenData.Onboarding1.fName.charAt(0)}${screenData.Onboarding1.lName.charAt(0)}`.toUpperCase();
-          setProfileInitials(initials);
-          data.push(['user_profileInitials', initials]);
-        }
-
-        if (data.length > 0) {
-          await AsyncStorage.multiSet(data);
-        }
-      } catch (e) {
-        console.log("An error occurred while saving data!!");
-      }
-    }
-
-    saveDataInMemory();
-  }, [screenData]);
 
   let storeNotificationCheckboxStatus = async (data: checkBoxType) => {
     try {
@@ -137,44 +72,33 @@ const Profile = () => {
     }
   }
 
-  const keys = [
-    'user_firstName',
-    'user_lastName',
-    'user_email',
-    'user_phoneNumber',
-    'user_imageUri',
-    'user_profileInitials'
-  ]
   let loadDataFromMemory = async () => {
-    const result = await AsyncStorage.multiGet(keys);
-    result.forEach(([key, value]: any) => {
-      if (value) {
-        switch (key) {
-          case 'user_firstName':
-            setFirstName(value);
-            break;
-          case 'user_lastName':
-            setLastName(value);
-            break;
-          case 'user_email':
-            setEmail(value);
-            break;
-          case 'user_phoneNumber':
-            setPhoneNumber(value);
-            break;
-          case 'user_imageUri':
-            setProfileImage(value);
-            break;
-          case 'user_profileInitials':
-            setProfileInitials(value);
-            break;
-        }
+    try{
+      let firstName = await AsyncStorage.getItem('user_firstName');
+      let lastName = await AsyncStorage.getItem('user_lastName');
+      let profileInitials = await AsyncStorage.getItem('user_profileInitials');
+      let email = await AsyncStorage.getItem('user_email');
+      let phoneNumber = await AsyncStorage.getItem('user_phoneNumber');
+      let imageUri = await AsyncStorage.getItem('user_profileImage');
+
+      if(firstName) setFirstName(firstName);
+      if(lastName) setLastName(lastName);
+      if(profileInitials) setProfileInitials(profileInitials);
+      if(email) setEmail(email);
+      if(phoneNumber) setPhoneNumber(phoneNumber);
+      if(imageUri){
+        setProfileImage(imageUri);
+      }else{
+        setProfileImage(null);
       }
-    });
+     
+      console.log("Data has been successfully loaded from memory.");
+    }catch(e){
+      console.log("An error occurred while saving data in memory!!");
+    }
   }
 
   React.useEffect(() => {
-    storeNotificationCheckboxStatus(checkbox);
     loadDataFromMemory();
     loadNotificationCheckboxStatus();
   }, []);
@@ -369,9 +293,9 @@ const Profile = () => {
       if (phoneNumber)
         await AsyncStorage.setItem('user_phoneNumber', phoneNumber);
       if (profileImage) {
-        await AsyncStorage.setItem('user_imageUri', profileImage);
+        await AsyncStorage.setItem('user_profileImage', profileImage);
       } else {
-        await AsyncStorage.removeItem('user_imageUri');
+        await AsyncStorage.removeItem('user_profileImage');
       }
       if (firstName && lastName) {
         let initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
@@ -380,7 +304,6 @@ const Profile = () => {
       }
 
       storeNotificationCheckboxStatus(checkbox);
-
       Alert.alert("Changes have been saved Successfully.");
       setAnyChange("");
     } catch (e) {
@@ -398,37 +321,10 @@ const Profile = () => {
       {
         text: 'Yes',
         style: 'destructive',
-        onPress: async () => {
-          try {
-            let fName = await AsyncStorage.getItem('user_firstName');
-            let lName = await AsyncStorage.getItem('user_lastName');
-            let email = await AsyncStorage.getItem('user_email');
-            let pNumber = await AsyncStorage.getItem('user_phoneNumber');
-            let pUri = await AsyncStorage.getItem('user_imageUri');
-            let initials = await AsyncStorage.getItem('user_profileInitials');
-
-            if (fName)
-              setFirstName(fName);
-            if (lName)
-              setLastName(lName);
-            if (email)
-              setEmail(email);
-            if (pNumber)
-              setPhoneNumber(pNumber);
-            if (pUri) {
-              setProfileImage(pUri);
-            } else {
-              setProfileImage("");
-            }
-            if (initials) {
-              setProfileInitials(initials);
-            }
-
-            loadNotificationCheckboxStatus();
-            setAnyChange('');
-          } catch (e) {
-            console.log("An error occurred while discarding!!");
-          }
+        onPress: () => {
+          loadDataFromMemory();
+          loadNotificationCheckboxStatus();
+          setAnyChange("");
         }
       },
     ], { cancelable: true });
@@ -444,7 +340,10 @@ const Profile = () => {
         >
         </ImageBackground>
         <View style={styles.header}>
-          <Pressable style={styles.backButton}>
+          <Pressable
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
             <AntDesign
               name={'arrowleft'}
               color={'white'}
@@ -702,7 +601,7 @@ const Profile = () => {
                 <Text style={styles.editButtonText}>Cancel</Text>
               </Pressable>
               <Pressable
-                style={[styles.editButton, isDisabled&&styles.disabled]}
+                style={[styles.editButton, isDisabled && styles.disabled]}
                 onPress={() => {
                   handleEditSave();
                 }}

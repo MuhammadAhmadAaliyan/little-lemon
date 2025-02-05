@@ -5,11 +5,11 @@ import * as SplashScreen from 'expo-splash-screen';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker'
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAppData } from './AppData';
 
 const Onboarding3 = () => {
 
     const [imageUri, setImageUri] = React.useState<string | null>(null);
+    const [profileInitials, setProfileInitials] = React.useState<string | undefined>("");
     const [fontsLoaded] = useFonts({
         'Markazi-Regular': require('@/assets/fonts/MarkaziText-Regular.ttf'),
         'Markazi-Bold': require('@/assets/fonts/MarkaziText-Bold.ttf'),
@@ -18,13 +18,24 @@ const Onboarding3 = () => {
         'Karla-Regular': require('@/assets/fonts/Karla-Regular.ttf'),
     });
 
-    const { updateScreenData, screenData } = useAppData();
-
     React.useEffect(() => {
         if (fontsLoaded) {
             SplashScreen.hideAsync();
         }
     }, [fontsLoaded]);
+
+    React.useEffect(() => {
+        let loadingProfileInitials = async () => {
+            try{
+                let initials = await AsyncStorage.getItem('user_profileInitials');
+                if(initials) setProfileInitials(initials);
+            }catch(e){
+                console.log('An error occurred while loading initials!!')
+            }
+        } 
+
+        loadingProfileInitials();
+    }, [])
 
     if (!fontsLoaded) {
         return null;
@@ -82,11 +93,15 @@ const Onboarding3 = () => {
     let handleButton = async () => {
         try {
 
-            router.replace('/Profile');
+            router.replace('/HomeScreen');
             await AsyncStorage.setItem('onboardingComplete', "true");
-            updateScreenData('Onboarding3', { imageUri: imageUri });
+            if (imageUri) {
+                await AsyncStorage.setItem('user_profileImage', imageUri);
+            }
+
+            console.log("Onboarding3 data has been saved Successfully.");
         } catch (e) {
-            console.log("An error occurred during saving!!");
+            console.log("An error occurred while data of Onboarding 3!!");
         }
     }
 
@@ -111,7 +126,7 @@ const Onboarding3 = () => {
                                 style={styles.profileImage}
                             />) :
                             (<View style={[styles.profileImage, styles.defaultImage]}>
-                                <Text style={styles.profileInitials}>{`${screenData.Onboarding1.fName?.charAt(0)}${screenData.Onboarding1.lName?.charAt(0)}`.toUpperCase()}</Text>
+                                <Text style={styles.profileInitials}>{profileInitials}</Text>
                             </View>)
                         }
                         <Pressable

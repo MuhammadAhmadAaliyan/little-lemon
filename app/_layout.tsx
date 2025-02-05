@@ -2,7 +2,6 @@ import * as React from 'react';
 import { router, Stack } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SplashScreen } from 'expo-router';
-import { AppDataProvider } from './AppData';
 import { StatusBar } from 'expo-status-bar';
 
 export default function RootLayout() {
@@ -15,7 +14,7 @@ export default function RootLayout() {
     try {
       const isCompleteOnboarding = await AsyncStorage.getItem('onboardingComplete');
       if (isCompleteOnboarding === "true") {
-        router.replace('/Profile');
+        router.replace('/HomeScreen')
       } else {
         router.replace('/');
       }
@@ -32,14 +31,15 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <AppDataProvider>
+    <>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="Onboarding2" />
         <Stack.Screen name="Onboarding3" />
+        <Stack.Screen name='HomeScreen' />
         <Stack.Screen name="Profile" />
       </Stack>
-      <StatusBar style = 'auto'/>
-    </AppDataProvider>
+      <StatusBar style='auto' />
+    </>
   );
 }

@@ -3,7 +3,7 @@ import { ScrollView, View, Text, StyleSheet, Image, TextInput, KeyboardAvoidingV
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { router } from 'expo-router';
-import { useAppData } from './AppData';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Onboarding1 = () => {
 
@@ -16,36 +16,16 @@ const Onboarding1 = () => {
         'Karla-Regular': require('@/assets/fonts/Karla-Regular.ttf'),
     });
 
-    const { updateScreenData } = useAppData();
-
     React.useEffect(() => {
         if (fontsLoaded) {
             SplashScreen.hideAsync();
         }
     }, [fontsLoaded]);
 
-    React.useEffect(() => {
-        const backAction = () => {
-          Alert.alert("", 'Are you sure you want to exit?', [
-            {
-              text: 'Cancel',
-              onPress: () => null,
-              style: 'cancel',
-            },
-            { text: 'YES', onPress: () => BackHandler.exitApp() }
-          ]);
-          return true;
-        };
-    
-        const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
-    
-        return () => backHandler.remove();
-      }, []);
-
     if (!fontsLoaded) {
         return null;
     }
-    
+
     const isEmailAndFNameValid = (firstName: string, lastName: string) => {
 
         const nameRegrex = /^[A-Za-z]+( [A-Za-z]+)*$/;
@@ -55,10 +35,28 @@ const Onboarding1 = () => {
 
     const isValid = isEmailAndFNameValid(firstName, lastName);
 
-    let handleButton = () => {
+    let handleButton = async () => {
+        try {
+            let data: any = [];
+            if (firstName) {
+                data.push(['user_firstName', firstName]);
+            }
+            if (firstName) {
+                data.push(['user_lastName', lastName]);
+            }
 
-        router.push('/Onboarding2');
-        updateScreenData('Onboarding1', {fName: firstName, lName: lastName});
+            let initials = `${firstName.charAt(0)}${lastName.charAt(0)}`;
+            data.push(['user_profileInitials', initials]);
+
+            if (data.length > 0) {
+                await AsyncStorage.multiSet(data);
+            }
+
+            console.log("Onboarding1 data has been saved successfully!!");
+            router.push('/Onboarding2');
+        } catch (e) {
+            console.log("An error occurred while saving data of Onboarding 1 Screen!!");
+        }
     }
 
     return (
