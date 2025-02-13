@@ -4,6 +4,7 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from 'expo-router';
 
 const Onboarding1 = () => {
 
@@ -21,6 +22,24 @@ const Onboarding1 = () => {
             SplashScreen.hideAsync();
         }
     }, [fontsLoaded]);
+
+        useFocusEffect(() => {
+            const backAction = () => {
+                Alert.alert("", 'Are you sure you want to exit?', [
+                    {
+                        text: 'Cancel',
+                        onPress: () => null,
+                        style: 'cancel',
+                    },
+                    { text: 'YES', onPress: () => BackHandler.exitApp() }
+                ]);
+                return true;
+            };
+    
+            const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+    
+            return () => backHandler.remove();
+        });
 
     if (!fontsLoaded) {
         return null;
@@ -121,7 +140,8 @@ const styles = StyleSheet.create({
         paddingTop: 45,
         paddingBottom: 28,
         flexDirection: 'row',
-        paddingHorizontal: 33
+        paddingHorizontal: 33,
+        justifyContent: 'center'
     },
     headerTitle: {
         color: '#495E57',

@@ -176,7 +176,8 @@ const styles = StyleSheet.create({
         paddingTop: 45,
         paddingBottom: 28,
         flexDirection: 'row',
-        paddingHorizontal: 33
+        paddingHorizontal: 33,
+        justifyContent: 'center'
     },
     headerTitle: {
         color: '#495E57',

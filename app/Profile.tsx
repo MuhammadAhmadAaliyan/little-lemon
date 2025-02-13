@@ -91,6 +91,13 @@ const Profile = () => {
       }else{
         setProfileImage(null);
       }
+
+      const checkboxesStatus = await AsyncStorage.getItem('notification_checkbox');
+      if(checkboxesStatus){
+        await AsyncStorage.setItem('notification_checkbox', checkboxesStatus);
+      }else{
+        await storeNotificationCheckboxStatus(checkbox);
+      }
      
       console.log("Data has been successfully loaded from memory.");
     }catch(e){
