@@ -28,6 +28,7 @@ const HomeScreen = () => {
     const [isLoading, setLoading] = React.useState(true);
     const [searchQuery, setSearchQuery] = React.useState("");
     const [isKeyboardVisible, setKeyboardVisible] = React.useState(false);
+    const inputRef = React.useRef<TextInput>(null);
 
     const menuAPI = 'https://raw.githubusercontent.com/Meta-Mobile-Developer-PC/Working-With-Data-API/main/capstone.json';
     const BASE_IMG_URL = 'https://github.com/Meta-Mobile-Developer-PC/Working-With-Data-API/blob/main/images/'
@@ -147,48 +148,48 @@ const HomeScreen = () => {
         };
     }, []);
 
-    //
+    //Fuction for filtering menu items by categories and search.
     React.useEffect(() => {
         const timeId = setTimeout(() => {
-        let filteredMenuBySelectedCategoryAndSearch = async (categories: string[], searchQuery: string) => {
-            try {
-                const db = await openDatabase();
-                if (!db) throw new Error("Failed to open database");
-                let query = "SELECT * FROM menu";
-                let params: any[] = [];
-    
-                if (categories.length > 0 || searchQuery.length > 0) {
-                    query += " WHERE";
-                    const conditions: string[] = [];
-    
-                    if (categories.length > 0) {
-                        const placeholders = categories.map(() => '?').join(', ');
-                        conditions.push(`category IN (${placeholders})`);
-                        params.push(...categories);
-                    }
-    
-                    if (searchQuery.length > 0) {
-                        conditions.push(`name LIKE ?`);
-                        params.push(`%${searchQuery}%`);
-                    }
-    
-                    query += " " + conditions.join(" AND ");
-                }
-    
-                const filteredMenu: any = await db.getAllAsync(query, params);
-                if(filteredMenu.length > 0){
-                setMenu(filteredMenu);
-                }else{
-                    setMenu([]);
-                }
-            } catch (e) {
-                console.log("An error occurred while filtering menu!!", e);
-            }
-        }
-        filteredMenuBySelectedCategoryAndSearch(selectedCategories, searchQuery);
-    }, 500)
+            let filteredMenuBySelectedCategoryAndSearch = async (categories: string[], searchQuery: string) => {
+                try {
+                    const db = await openDatabase();
+                    if (!db) throw new Error("Failed to open database");
+                    let query = "SELECT * FROM menu";
+                    let params: any[] = [];
 
-    return () => clearTimeout(timeId);
+                    if (categories.length > 0 || searchQuery.length > 0) {
+                        query += " WHERE";
+                        const conditions: string[] = [];
+
+                        if (categories.length > 0) {
+                            const placeholders = categories.map(() => '?').join(', ');
+                            conditions.push(`category IN (${placeholders})`);
+                            params.push(...categories);
+                        }
+
+                        if (searchQuery.length > 0) {
+                            conditions.push(`name LIKE ?`);
+                            params.push(`%${searchQuery}%`);
+                        }
+
+                        query += " " + conditions.join(" AND ");
+                    }
+
+                    const filteredMenu: any = await db.getAllAsync(query, params);
+                    if (filteredMenu.length > 0) {
+                        setMenu(filteredMenu);
+                    } else {
+                        setMenu([]);
+                    }
+                } catch (e) {
+                    console.log("An error occurred while filtering menu!!", e);
+                }
+            }
+            filteredMenuBySelectedCategoryAndSearch(selectedCategories, searchQuery);
+        }, 500)
+
+        return () => clearTimeout(timeId);
     }, [selectedCategories, searchQuery])
 
     if (!fontsLoaded) {
@@ -246,8 +247,9 @@ const HomeScreen = () => {
                 )
                 }
                 <View style={[styles.searchBarContainer, isKeyboardVisible && { bottom: 10 }]}>
-                    <Ionicons name={'search-sharp'} size={24} color={'#495E57'} />
+                    <Ionicons name={'search-sharp'} size={24} color={'#495E57'} onPress={() => inputRef.current?.focus()}/>
                     <TextInput
+                        ref={inputRef}
                         value={searchQuery}
                         onChangeText={(text) => setSearchQuery(text)}
                         style={styles.search}
@@ -260,19 +262,24 @@ const HomeScreen = () => {
             <View style={styles.menuBreakdown}>
                 <Text style={styles.sectionTitle}>ORDER FOR DELIVERY!</Text>
                 <View style={styles.categoryContainer}>
-                    {
-                        categories.map((category: any, index: any) => (
-                            <TouchableOpacity key={index}
+                    <FlatList
+                        data={categories}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity
                                 style={[
                                     styles.category,
-                                    selectedCategories.includes(category) && styles.selectedCategory
+                                    selectedCategories.includes(item) && styles.selectedCategory
                                 ]}
-                                onPress={() => handleMenuItemsByCategory(category)}
+                                onPress={() => handleMenuItemsByCategory(item)}
                             >
-                                <Text style={[styles.categoryText, selectedCategories.includes(category) && styles.selectedCategoryText]}>{category}</Text>
+                                <Text style={[styles.categoryText, selectedCategories.includes(item) && styles.selectedCategoryText]}>{item}</Text>
                             </TouchableOpacity>
-                        ))
-                    }
+                        )}
+                        keyExtractor={(item, index) => index.toString()}
+                        horizontal
+                        ItemSeparatorComponent={() => <View style={{ width: 50 }} />}
+                        showsHorizontalScrollIndicator={false}
+                    />
                 </View>
                 <View style={{ borderWidth: 0.5, borderColor: '#CDCDCD' }} />
                 {
@@ -282,28 +289,29 @@ const HomeScreen = () => {
                         ) :
                         (menu.length > 0 ?
                             (
-                            <FlatList
-                                data={menu}
-                                keyExtractor={(item, index) => index.toString()}
-                                renderItem={({ item }: { item: any }) => (
-                                    <View style={styles.card}>
-                                        <View style={styles.details}>
-                                            <Text style={styles.cardTitle}>{item.name}</Text>
-                                            <Text style={styles.paragraphText} numberOfLines={2}>{item.description}</Text>
-                                            <Text style={styles.highlightText}>${item.price}</Text>
+                                <FlatList
+                                    data={menu}
+                                    keyExtractor={(item, index) => index.toString()}
+                                    renderItem={({ item }: { item: any }) => (
+                                        <View style={styles.card}>
+                                            <View style={styles.details}>
+                                                <Text style={styles.cardTitle}>{item.name}</Text>
+                                                <Text style={styles.paragraphText} numberOfLines={2}>{item.description}</Text>
+                                                <Text style={styles.highlightText}>${item.price}</Text>
+                                            </View>
+                                            <Image
+                                                source={{ uri: `${BASE_IMG_URL}${item.image}?raw=true` }}
+                                                style={styles.itemImage}
+                                                resizeMode={'cover'}
+                                            />
                                         </View>
-                                        <Image
-                                            source={{ uri: `${BASE_IMG_URL}${item.image}?raw=true` }}
-                                            style={styles.itemImage}
-                                            resizeMode={'cover'}
-                                        />
-                                    </View>
-                                )}
-                            />
+                                    )}
+                                    showsVerticalScrollIndicator={false}
+                                />
                             ) :
                             (
-                                <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-                                <Text style={{fontFamily: 'Karla-Bold', fontSize: 18}}>No Match found.</Text>
+                                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                                    <Text style={{ fontFamily: 'Karla-Bold', fontSize: 18 }}>No Match found.</Text>
                                 </View>
                             )
                         )
@@ -419,9 +427,8 @@ const styles = StyleSheet.create({
         fontFamily: 'Karla-ExtraBold'
     },
     categoryContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginVertical: 15,
+        paddingVertical: 12,
+        paddingBottom: 22
     },
     category: {
         borderWidth: 1,

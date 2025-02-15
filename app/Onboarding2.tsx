@@ -62,7 +62,7 @@ const Onboarding2 = () => {
 
     return (
         <>
-        <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}>
             <ScrollView>
                 <View style={styles.header}>
                     <Image
