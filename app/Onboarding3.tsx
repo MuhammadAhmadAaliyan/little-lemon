@@ -107,7 +107,7 @@ const Onboarding3 = () => {
 
     return (
         <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}>
-            <ScrollView>
+            <ScrollView showsVerticalScrollIndicator={false}>
                 <View style={styles.header}>
                     <Image
                         source={require('../assets/images/lemon-logo.png')}
